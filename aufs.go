@@ -37,6 +37,7 @@ import (
 	"github.com/containerd/containerd/snapshots"
 	"github.com/containerd/containerd/snapshots/storage"
 	"github.com/containerd/continuity/fs"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/pkg/errors"
 )
 
@@ -59,8 +60,9 @@ var (
 )
 
 type snapshotter struct {
-	root string
-	ms   *storage.MetaStore
+	root      string
+	ms        *storage.MetaStore
+	platforms []ocispec.Platform
 }
 
 // New creates a new snapshotter using aufs
@@ -79,9 +81,14 @@ func New(root string) (snapshots.Snapshotter, error) {
 		return nil, err
 	}
 	return &snapshotter{
-		root: root,
-		ms:   ms,
+		root:      root,
+		ms:        ms,
+		platforms: []ocispec.Platform{platforms.DefaultSpec()},
 	}, nil
+}
+
+func (o *snapshotter) SupportedPlatforms(ctx context.Context) ([]ocispec.Platform, error) {
+	return o.platforms, nil
 }
 
 func (o *snapshotter) Stat(ctx context.Context, key string) (snapshots.Info, error) {
